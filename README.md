@@ -4,8 +4,8 @@ Ask questions about fridge/freezer user manuals (German or English) and get answ
 
 ## Architecture
 ```
-PDF manuals → chunking (file+page kept) → multilingual embeddings → Chroma vector DB
-question → embedding → top-k retrieval (+ optional BM25 keyword search) → Claude with "answer only from sources" prompt → answer + citations
+PDF manuals → cleaning (drop cover/TOC) → chunking (file+page kept) + context header (brand/model/language) → multilingual embeddings → Chroma vector DB
+question → vector search + BM25 keyword search → Reciprocal Rank Fusion (top-5) → Claude with "answer only from sources" prompt → answer + citations
 ```
 
 ## Setup (Windows, Python 3.11)
@@ -20,22 +20,32 @@ set ANTHROPIC_API_KEY=your_key_here
 3. `python rag.py "Wie taue ich das Gefrierfach ab?"` – quick test.
 4. `streamlit run app.py` – chat UI.
 
-## Evaluation
-1. Replace the examples in `eval/questions.csv` with 15–20 real questions and where the answer is (file, page).
-2. `python evaluate.py` and `python evaluate.py --hybrid`.
-3. Change `CHUNK_WORDS` in `config.py` (150 / 300 / 500), re-run `ingest.py` and `evaluate.py`, and record results:
+## Evaluation (Step 2)
+Test set: `eval/questions.csv` – 23 questions on 18 manuals (DE/EN/FR/NL); 18 answerable ones with the expected page (used for retrieval metrics) and 5 unanswerable ones (refusal tests, Step 3).
+Metrics: **Hit@5** (right page among the top 5) and **MRR** (rewards a higher rank). Reproduce everything with `python experiments.py` (local, no API cost); each run is logged to `eval/results.jsonl`.
 
-| Setting | Hit rate |
-|---|---|
-| 300 words, vector only | |
-| 300 words, hybrid | |
-| … | |
+| Exp | Change | Vector Hit@5 / MRR | Hybrid (RRF) Hit@5 / MRR |
+|---|---|---|---|
+| E0 | baseline (300-word chunks) | 50 % / 0.26 | 83 % / 0.60 |
+| E1 | + drop cover/TOC pages, clean dot leaders | 56 % / 0.31 | 83 % / 0.64 |
+| E2 | + context header (brand/model/language) per chunk | 83 % / 0.65 | 89 % / 0.79 |
+| E3 | E1 + E2 | 83 % / 0.65 | 89 % / 0.79 |
+| **E4** | **E3 with 150-word chunks (default)** | **83 % / 0.77** | **89 % / 0.84** |
+| E5 | E3 with 500-word chunks | 78 % / 0.68 | 89 % / 0.71 |
+
+What the numbers say
+- **Context header was the biggest single gain** (vector 50 → 83 %): content pages rarely mention brand/model, so brand-specific questions could not find them.
+- Hybrid search beat vector search at baseline (83 vs 50 %). Note: E0 hybrid already uses the new RRF fusion and tokenizer, so it is not identical to the Step 1 hybrid.
+- Cleaning adds little once headers exist (E3 = E2).
+- Smaller chunks rank the right page higher (MRR 0.65 → 0.77 vector, 0.79 → 0.84 hybrid); 500 words is worse.
+- Caveat: only 18 answerable questions (1 question = 5.6 points) and the fixes were designed after seeing the failures, so a held-out question set is needed (planned for Step 3).
 
 ## Design decisions (talking points)
 - Local multilingual embeddings – no data leaves the machine except the final prompt.
 - Citations + "not covered" rule as a guardrail against hallucination.
-- Hybrid search because manuals contain exact terms (error codes, model numbers) that pure vector search can miss.
+- Hybrid search (vector + BM25, Reciprocal Rank Fusion) because manuals contain exact terms (error codes, model numbers) that pure vector search can miss.
+- Context header on every chunk, because content pages do not repeat brand/model.
 - Measured, not guessed: chunk size and retrieval mode chosen by hit rate.
 
 ## Next steps
-Re-ranking, answer-quality evaluation (LLM-as-judge), Databricks Vector Search / Azure AI Search deployment, cost and latency logging.
+Held-out question set, re-ranking, answer-quality evaluation (LLM-as-judge), Databricks Vector Search / Azure AI Search deployment, cost and latency logging.

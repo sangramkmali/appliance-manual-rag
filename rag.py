@@ -78,7 +78,7 @@ def _bm25_legacy():
     return BM25Okapi([d.lower().split() for d in data["documents"]]), data
 
 
-def answer(question, hybrid=False):
+def answer(question, hybrid=True):
     hits = retrieve(question, hybrid=hybrid)
     ctx = "\n\n".join(f"[{i}] ({h['source']}, p.{h['page']})\n{h['text']}" for i, h in enumerate(hits, 1))
     msg = anthropic.Anthropic().messages.create(

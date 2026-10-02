@@ -4,7 +4,7 @@ from rag import answer
 
 st.set_page_config(page_title="Appliance Manual Assistant", page_icon="🧊")
 st.title("Appliance Manual Assistant (RAG demo)")
-hybrid = st.sidebar.toggle("Hybrid search (vector + keyword)", value=False)
+hybrid = st.sidebar.toggle("Hybrid search (vector + keyword)", value=True)
 if "chat" not in st.session_state:
     st.session_state.chat = []
 for role, text in st.session_state.chat:
