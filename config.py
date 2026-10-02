@@ -6,4 +6,4 @@ EMBED_MODEL = "intfloat/multilingual-e5-small"   # German + English, runs locall
 CHUNK_WORDS = 300              # chunk size in words (try 150 / 300 / 500 in the evaluation)
 OVERLAP_WORDS = 50
 TOP_K = 5
-LLM_MODEL = "claude-sonnet-5-5" # needs ANTHROPIC_API_KEY in the environment
+LLM_MODEL = "claude-haiku-4-5-20251001"   # needs ANTHROPIC_API_KEY in the environment
