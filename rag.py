@@ -1,4 +1,5 @@
-"""Step 3+4: retrieve relevant chunks and let the LLM answer only from them, with citations."""
+"""Step 3+4 (+Step 2 retrieval upgrade): retrieve relevant chunks and let the LLM answer only from them, with citations."""
+import re
 from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 import chromadb, anthropic
@@ -20,23 +21,62 @@ def _col():
 @lru_cache
 def _bm25():
     data = _col().get(include=["documents", "metadatas"])
+    return BM25Okapi([tokenize(d) for d in data["documents"]]), data
+
+
+def tokenize(text):
+    """Lower-case word tokens; punctuation is stripped so 'KF96N,' still matches 'KF96N'."""
+    return re.findall(r"\w+", text.lower())
+
+
+def rrf_fuse(rank_lists, k, c=60):
+    """Reciprocal Rank Fusion: score(d) = sum over lists of 1/(c + rank). Returns the best k ids.
+    Needs no score normalisation, so vector distances and BM25 scores can be mixed safely."""
+    score = {}
+    for ranking in rank_lists:
+        for rank, doc_id in enumerate(ranking, 1):
+            score[doc_id] = score.get(doc_id, 0.0) + 1.0 / (c + rank)
+    return sorted(score, key=lambda d: -score[d])[:k]
+
+
+def retrieve(question, k=C.TOP_K, hybrid=False, fusion="rrf", pool=20):
+    """fusion='rrf'    : vector + BM25 merged with Reciprocal Rank Fusion, exactly k results (fair).
+       fusion='append' : legacy Step-1 merge (k vector hits + extra BM25 hits, up to k+2) - kept for comparison."""
+    q = _model().encode(["query: " + question], normalize_embeddings=True)[0].tolist()
+    if not hybrid or fusion == "append":
+        r = _col().query(query_embeddings=[q], n_results=k)
+        hits = [{"text": t, **m} for t, m in zip(r["documents"][0], r["metadatas"][0])]
+        if hybrid:
+            bm, data = _bm25_legacy()
+            scores = bm.get_scores(question.lower().split())
+            top = sorted(range(len(scores)), key=lambda i: -scores[i])[:k]
+            seen = {(h["source"], h["page"], h["text"][:40]) for h in hits}
+            for i in top:
+                h = {"text": data["documents"][i], **data["metadatas"][i]}
+                if (h["source"], h["page"], h["text"][:40]) not in seen:
+                    hits.append(h)
+            hits = hits[:k + 2]
+        return hits
+    r = _col().query(query_embeddings=[q], n_results=pool, include=["documents", "metadatas"])
+    by_id = {i: {"text": t, **m} for i, t, m in zip(r["ids"][0], r["documents"][0], r["metadatas"][0])}
+    vec_rank = list(r["ids"][0])
+    bm, data = _bm25()
+    scores = bm.get_scores(tokenize(question))
+    top = sorted(range(len(scores)), key=lambda i: -scores[i])[:pool]
+    kw_rank = []
+    for i in top:
+        if scores[i] <= 0:
+            break
+        by_id.setdefault(data["ids"][i], {"text": data["documents"][i], **data["metadatas"][i]})
+        kw_rank.append(data["ids"][i])
+    return [by_id[i] for i in rrf_fuse([vec_rank, kw_rank], k)]
+
+
+@lru_cache
+def _bm25_legacy():
+    data = _col().get(include=["documents", "metadatas"])
     return BM25Okapi([d.lower().split() for d in data["documents"]]), data
 
-def retrieve(question, k=C.TOP_K, hybrid=False):
-    q = _model().encode(["query: " + question], normalize_embeddings=True)[0].tolist()
-    r = _col().query(query_embeddings=[q], n_results=k)
-    hits = [{"text": t, **m} for t, m in zip(r["documents"][0], r["metadatas"][0])]
-    if hybrid:  # Step 6 option: add keyword (BM25) hits, merge without duplicates
-        bm, data = _bm25()
-        scores = bm.get_scores(question.lower().split())
-        top = sorted(range(len(scores)), key=lambda i: -scores[i])[:k]
-        seen = {(h["source"], h["page"], h["text"][:40]) for h in hits}
-        for i in top:
-            h = {"text": data["documents"][i], **data["metadatas"][i]}
-            if (h["source"], h["page"], h["text"][:40]) not in seen:
-                hits.append(h)
-        hits = hits[:k + 2]
-    return hits
 
 def answer(question, hybrid=False):
     hits = retrieve(question, hybrid=hybrid)

@@ -10,3 +10,6 @@ data/*.pdf
 *api_key*
 *.key
 secrets*.txt
+
+# experiment databases (rebuilt by experiments.py)
+chroma_db*/
