@@ -1,4 +1,24 @@
-question,expected_source,expected_page
-How do I defrost the freezer compartment?,MANUAL_NAME.pdf,12
-Welche Temperatur wird für das Kühlteil empfohlen?,MANUAL_NAME.pdf,8
-What does the flashing alarm light mean?,MANUAL_NAME.pdf,15
+question,expected,language,type
+"Nach wie vielen Sekunden ertönt beim Liebherr ECBN 61 der Tonwarner, wenn die Gerätetür offen steht?",LIEBHERR_ECBN61_DE.pdf:7,de,fact
+Nach wie vielen Stunden schaltet sich der SabbathMode beim Liebherr CBN automatisch ab?,LIEBHERR_CBN_DE.pdf:17,de,fact
+Welche Temperatur kann im Kühlraum der Bosch KSL eingestellt werden?,BOSCH_KSL_DE-EN.pdf:10,de,fact
+Wie stark darf eine Ablageplatte im Gefrierteil des Liebherr CBN mit NoFrost belastet werden?,LIEBHERR_CBN_DE.pdf:22|LIEBHERR_CBN_DE.pdf:21,de,fact
+Wann schaltet sich beim Siemens KF96N der Temperaturalarm ein?,SIEMENS_KF96N_DE.pdf:19|SIEMENS_KF96N_DE.pdf:29,de,fact
+"Was muss ich beim Entsorgen eines AEG Kühl-Gefrierschranks mit der Tür tun, damit sich keine Kinder einschließen können?",AEG_TSC5S183DF_DE.pdf:8|AEG_NSC6M193ES_DE.pdf:8|AEG_OSC5S183ES_DE.pdf:8,de,fact
+"Was passiert beim Siemens KF96N im Sabbat-Modus mit Super-Kühlen, Alarm und Innenbeleuchtung?",SIEMENS_KF96N_DE.pdf:19,de,fact
+After how many seconds does the audible door alarm sound on the Liebherr HC 2090G?,LIEBHERR_HC2090G_EN.pdf:11,en,fact
+What does an F1 to F5 display code mean on the Liebherr HC 2090G?,LIEBHERR_HC2090G_EN.pdf:11,en,fact
+What does it mean when the power failure LED is lit on the Liebherr HC 2090G?,LIEBHERR_HC2090G_EN.pdf:11,en,fact
+Is there a door alarm when Sabbath mode is active on the Liebherr HC 2090G?,LIEBHERR_HC2090G_EN.pdf:12,en,fact
+After how many hours does the Bosch KGN return to normal operation after switching on Super freezing?,BOSCH_KGN_EN.pdf:17,en,fact
+How do I make ice cubes with the ice maker of the Bosch KFN96?,BOSCH_KFN96_EN.pdf:15,en,fact
+How can the Bosch KFN96 be connected automatically to the home network with Home Connect?,BOSCH_KFN96_EN.pdf:19,en,fact
+What does the ice pack do in the event of a power failure on the Bosch KIN?,BOSCH_KIN_EN.pdf:9,en,fact
+Comment préparer des glaçons avec le bac à glaçons du Bosch KGN ?,BOSCH_KGN_DE-EN-FR-IT-NL.pdf:61,fr,fact
+Combien de temps faut-il attendre avant de ranger des aliments après la première mise en marche du Bosch KGN ?,BOSCH_KGN_DE-EN-FR-IT-NL.pdf:53,fr,fact
+Wat staat er in het Siemens KI96N-handboek over stroomuitval?,SIEMENS_KI96N_DE-FR-IT-NL.pdf:99,nl,fact
+Wie viel kostet ein Liebherr Kühlschrank?,,de,unanswerable
+Was bedeutet der Fehlercode E3?,,de,unanswerable
+How do I connect the fridge to Amazon Alexa?,,en,unanswerable
+Wie programmiere ich eine Waschmaschine für Wolle?,,de,unanswerable
+What is the warranty period of the Siemens KGN fridge-freezer?,,en,unanswerable
