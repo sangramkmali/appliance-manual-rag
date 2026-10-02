@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+chroma_db/
+.env
+# manuals are third-party copyright: list them in data/SOURCES.md, don't commit the PDFs
+data/*.pdf
+
+# secrets: never commit keys
+*API Key*
+*api_key*
+*.key
+secrets*.txt
