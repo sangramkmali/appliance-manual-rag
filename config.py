@@ -20,3 +20,7 @@ CONTEXT_HEADER = _env("RAG_CONTEXT_HEADER", 1, int) # 1 = prefix every chunk wit
 # Step 3: cross-encoder re-ranking (second-stage model that reads question + chunk together)
 RERANK_MODEL = _env("RAG_RERANK_MODEL", "BAAI/bge-reranker-v2-m3")   # multilingual; alt: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
 RERANK_POOL = _env("RAG_RERANK_POOL", 20, int)      # candidates passed to the re-ranker (then top-k are kept)
+
+# Step 3: light stemming for BM25 (0 = off). N>0 truncates purely alphabetic words to their first N letters,
+# so French 'rangez'/'ranger' or 'alimentaires'/'aliments' match. Language-agnostic; model numbers (with digits) are untouched.
+BM25_STEM = _env("RAG_BM25_STEM", 0, int)

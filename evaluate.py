@@ -83,7 +83,7 @@ def main():
         if not r["rank"]:
             print(f"      expected: {r['expected']}\n      got top3: {r['top']}")
     n_un = sum(r["type"] == "unanswerable" for r in rows)
-    print(f"\n(k={k}, hybrid={a.hybrid}, fusion={a.fusion if a.hybrid else '-'}, rerank={C.RERANK_MODEL if a.rerank else '-'}, clean={C.CLEAN}, header={C.CONTEXT_HEADER}, chunk_words={C.CHUNK_WORDS}; {n_un} unanswerable questions skipped here - they test the LLM refusal, Step 3)")
+    print(f"\n(k={k}, hybrid={a.hybrid}, fusion={a.fusion if a.hybrid else '-'}, rerank={C.RERANK_MODEL if a.rerank else '-'}, bm25_stem={C.BM25_STEM}, clean={C.CLEAN}, header={C.CONTEXT_HEADER}, chunk_words={C.CHUNK_WORDS}; {n_un} unanswerable questions skipped here - they test the LLM refusal, Step 3)")
     print(f"{'group':6s} {'n':>3s} {'Hit@'+str(k):>7s} {'MRR':>6s}")
     for g in ["all"] + sorted(x for x in summary if x != "all"):
         s = summary[g]
@@ -92,7 +92,7 @@ def main():
     with open("eval/results.jsonl", "a", encoding="utf-8") as fh:
         fh.write(json.dumps({"time": time.strftime("%Y-%m-%d %H:%M"), "k": k, "hybrid": a.hybrid,
                              "fusion": a.fusion if a.hybrid else None, "rerank": C.RERANK_MODEL if a.rerank else None,
-                             "rerank_pool": C.RERANK_POOL if a.rerank else None, "clean": C.CLEAN,
+                             "rerank_pool": C.RERANK_POOL if a.rerank else None, "bm25_stem": C.BM25_STEM, "clean": C.CLEAN,
                              "context_header": C.CONTEXT_HEADER, "db_dir": C.DB_DIR,
                              "chunk_words": C.CHUNK_WORDS, "embed_model": C.EMBED_MODEL,
                              "note": a.note, "summary": summary}, ensure_ascii=False) + "\n")

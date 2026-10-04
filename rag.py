@@ -32,7 +32,11 @@ def _reranker():
 
 def tokenize(text):
     """Lower-case word tokens; punctuation is stripped so 'KF96N,' still matches 'KF96N'."""
-    return re.findall(r"\w+", text.lower())
+    toks = re.findall(r"\w+", text.lower())
+    n = C.BM25_STEM
+    if n > 0:   # light stemming: truncate purely alphabetic words (keeps model numbers like 'kf96n' intact)
+        toks = [t[:n] if t.isalpha() and len(t) > n else t for t in toks]
+    return toks
 
 
 def rrf_fuse(rank_lists, k, c=60):
