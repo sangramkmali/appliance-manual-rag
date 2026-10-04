@@ -1,0 +1,17 @@
+question,expected,language,type
+For how many seconds does the Siemens FI display the warmest temperature reached when the alarm button is pressed?,SIEMENS_FI_EN.pdf:11,en,fact
+How do I change the display language on the Siemens FI ice and water dispenser?,SIEMENS_FI_EN.pdf:9,en,fact
+Which settings are switched off when Rest mode is active on the Siemens FI?,SIEMENS_FI_EN.pdf:11,en,fact
+After approximately how many hours does the Siemens GIV return to normal operation after manual Super freezing?,SIEMENS_GIV_EN.pdf:12,en,fact
+How do I switch on holiday mode on the Siemens KIN?,SIEMENS_KIN_EN.pdf:18,en,fact
+How do I switch off the door alarm on the Siemens KIN?,SIEMENS_KIN_EN.pdf:18,en,fact
+Wie lange kann man Brot im Gefrierfach des AEG NSC6M193ES lagern?,AEG_NSC6M193ES_DE.pdf:12,de,fact
+"Was muss ich tun, wenn ich das AEG NSC6M193ES längere Zeit nicht benutze?",AEG_NSC6M193ES_DE.pdf:14,de,fact
+Wie aktiviere ich die Kindersicherung beim Liebherr ECBN 61?,LIEBHERR_ECBN61_DE.pdf:8,de,fact
+Wie viel länger bleiben Lebensmittel im BioFresh-Teil des Liebherr ECBN 61 frisch als bei normalem Kühlen?,LIEBHERR_ECBN61_DE.pdf:12,de,fact
+Nach wie vielen Stunden schaltet das Siemens KGN nach manuellem Super-Gefrieren auf Normalbetrieb?,SIEMENS_KGN_DE.pdf:18,de,fact
+Combien d'heures avant de congeler des produits frais faut-il activer la supercongélation du Bosch KGN pour utiliser la capacité de congélation indiquée ?,BOSCH_KGN_DE-EN-FR-IT-NL.pdf:60,fr,fact
+Hoeveel uur vóór het invriezen van verse levensmiddelen moet u het supervriezen van de Bosch KGN inschakelen?,BOSCH_KGN_DE-EN-FR-IT-NL.pdf:104,nl,fact
+Wie bestelle ich Ersatzteile im Online-Shop von Miele?,,de,unanswerable
+How do I replace the water filter of my Samsung fridge?,,en,unanswerable
+Welches Rezept empfiehlt das Handbuch für eine Lasagne?,,de,unanswerable
