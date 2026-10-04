@@ -11,6 +11,7 @@ Metrics (answerable questions only):
 Run:  python evaluate.py                 vector search only
       python evaluate.py --hybrid        vector + keyword (BM25)
       python evaluate.py --k 3           top-3 instead of config.TOP_K
+      python evaluate.py --hybrid --rerank   + cross-encoder re-ranking (Step 3)
       python evaluate.py --hybrid --fusion append   legacy Step-1 merge (returns up to k+2 results - unfair)
 NOTE: --hybrid now defaults to Reciprocal Rank Fusion (exactly k results), so vector and hybrid are comparable.
 Settings under test come from RAG_* environment variables (see config.py / experiments.py).
@@ -64,6 +65,7 @@ def main():
     ap.add_argument("--hybrid", action="store_true")
     ap.add_argument("--fusion", choices=["rrf", "append"], default="rrf",
                     help="how hybrid merges vector + keyword hits (default rrf = exactly k results)")
+    ap.add_argument("--rerank", action="store_true", help="re-rank the first-stage candidates with a cross-encoder")
     ap.add_argument("--k", type=int, default=None)
     ap.add_argument("--csv", default="eval/questions.csv")
     ap.add_argument("--note", default="")
@@ -73,7 +75,7 @@ def main():
     from rag import retrieve
     k = a.k or C.TOP_K
     rows = list(csv.DictReader(open(a.csv, encoding="utf-8")))
-    per_q, summary = score(rows, lambda q, kk: retrieve(q, k=kk, hybrid=a.hybrid, fusion=a.fusion), k)
+    per_q, summary = score(rows, lambda q, kk: retrieve(q, k=kk, hybrid=a.hybrid, fusion=a.fusion, rerank=a.rerank), k)
 
     for r in per_q:
         mark = "✔" if r["rank"] else "✘"
@@ -81,7 +83,7 @@ def main():
         if not r["rank"]:
             print(f"      expected: {r['expected']}\n      got top3: {r['top']}")
     n_un = sum(r["type"] == "unanswerable" for r in rows)
-    print(f"\n(k={k}, hybrid={a.hybrid}, fusion={a.fusion if a.hybrid else '-'}, clean={C.CLEAN}, header={C.CONTEXT_HEADER}, chunk_words={C.CHUNK_WORDS}; {n_un} unanswerable questions skipped here - they test the LLM refusal, Step 3)")
+    print(f"\n(k={k}, hybrid={a.hybrid}, fusion={a.fusion if a.hybrid else '-'}, rerank={C.RERANK_MODEL if a.rerank else '-'}, clean={C.CLEAN}, header={C.CONTEXT_HEADER}, chunk_words={C.CHUNK_WORDS}; {n_un} unanswerable questions skipped here - they test the LLM refusal, Step 3)")
     print(f"{'group':6s} {'n':>3s} {'Hit@'+str(k):>7s} {'MRR':>6s}")
     for g in ["all"] + sorted(x for x in summary if x != "all"):
         s = summary[g]
@@ -89,7 +91,8 @@ def main():
 
     with open("eval/results.jsonl", "a", encoding="utf-8") as fh:
         fh.write(json.dumps({"time": time.strftime("%Y-%m-%d %H:%M"), "k": k, "hybrid": a.hybrid,
-                             "fusion": a.fusion if a.hybrid else None, "clean": C.CLEAN,
+                             "fusion": a.fusion if a.hybrid else None, "rerank": C.RERANK_MODEL if a.rerank else None,
+                             "rerank_pool": C.RERANK_POOL if a.rerank else None, "clean": C.CLEAN,
                              "context_header": C.CONTEXT_HEADER, "db_dir": C.DB_DIR,
                              "chunk_words": C.CHUNK_WORDS, "embed_model": C.EMBED_MODEL,
                              "note": a.note, "summary": summary}, ensure_ascii=False) + "\n")

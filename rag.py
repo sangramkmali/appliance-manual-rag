@@ -24,6 +24,12 @@ def _bm25():
     return BM25Okapi([tokenize(d) for d in data["documents"]]), data
 
 
+@lru_cache
+def _reranker():
+    from sentence_transformers import CrossEncoder
+    return CrossEncoder(C.RERANK_MODEL, max_length=512)
+
+
 def tokenize(text):
     """Lower-case word tokens; punctuation is stripped so 'KF96N,' still matches 'KF96N'."""
     return re.findall(r"\w+", text.lower())
@@ -39,7 +45,18 @@ def rrf_fuse(rank_lists, k, c=60):
     return sorted(score, key=lambda d: -score[d])[:k]
 
 
-def retrieve(question, k=C.TOP_K, hybrid=False, fusion="rrf", pool=20):
+def retrieve(question, k=C.TOP_K, hybrid=False, fusion="rrf", pool=20, rerank=False):
+    """rerank=True : first-stage search returns C.RERANK_POOL candidates, a cross-encoder re-scores
+                     (question, chunk) pairs and the best k are kept."""
+    if rerank:
+        cands = retrieve(question, k=max(C.RERANK_POOL, k), hybrid=hybrid, fusion=fusion, pool=max(pool, C.RERANK_POOL))
+        scores = _reranker().predict([(question, h["text"]) for h in cands])
+        order = sorted(range(len(cands)), key=lambda i: -float(scores[i]))
+        return [cands[i] for i in order[:k]]
+    return _retrieve(question, k, hybrid, fusion, pool)
+
+
+def _retrieve(question, k, hybrid, fusion, pool):
     """fusion='rrf'    : vector + BM25 merged with Reciprocal Rank Fusion, exactly k results (fair).
        fusion='append' : legacy Step-1 merge (k vector hits + extra BM25 hits, up to k+2) - kept for comparison."""
     q = _model().encode(["query: " + question], normalize_embeddings=True)[0].tolist()
@@ -78,8 +95,8 @@ def _bm25_legacy():
     return BM25Okapi([d.lower().split() for d in data["documents"]]), data
 
 
-def answer(question, hybrid=True):
-    hits = retrieve(question, hybrid=hybrid)
+def answer(question, hybrid=True, rerank=False):
+    hits = retrieve(question, hybrid=hybrid, rerank=rerank)
     ctx = "\n\n".join(f"[{i}] ({h['source']}, p.{h['page']})\n{h['text']}" for i, h in enumerate(hits, 1))
     msg = anthropic.Anthropic().messages.create(
         model=C.LLM_MODEL, max_tokens=600, system=SYSTEM,

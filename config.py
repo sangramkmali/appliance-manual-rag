@@ -16,3 +16,7 @@ LLM_MODEL = "claude-haiku-4-5-20251001"             # needs ANTHROPIC_API_KEY in
 # Step 2 retrieval improvements - defaults = best experiment (E4); override with RAG_* env vars to compare
 CLEAN = _env("RAG_CLEAN", 1, int)                   # 1 = drop cover/TOC pages, remove dot leaders
 CONTEXT_HEADER = _env("RAG_CONTEXT_HEADER", 1, int) # 1 = prefix every chunk with brand/model/language
+
+# Step 3: cross-encoder re-ranking (second-stage model that reads question + chunk together)
+RERANK_MODEL = _env("RAG_RERANK_MODEL", "BAAI/bge-reranker-v2-m3")   # multilingual; alt: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
+RERANK_POOL = _env("RAG_RERANK_POOL", 20, int)      # candidates passed to the re-ranker (then top-k are kept)

@@ -33,6 +33,17 @@ Metrics: **Hit@5** (right page among the top 5) and **MRR** (rewards a higher ra
 | **E4** | **E3 with 150-word chunks (default)** | **83 % / 0.77** | **89 % / 0.84** |
 | E5 | E3 with 500-word chunks | 78 % / 0.68 | 89 % / 0.71 |
 
+Held-out check (`eval/heldout.csv`, 13 answerable + 3 unanswerable questions written after the setup was chosen and not used to tune it):
+
+| Setup (E4: clean + header + 150-word chunks) | Hit@5 | MRR |
+|---|---|---|
+| Vector only | 100 % (13/13) | 0.79 |
+| Hybrid (RRF) | 100 % (13/13) | 0.90 |
+
+Both modes find the right page on all 13 held-out questions; hybrid ranks it higher (MRR 0.90 vs 0.79). With 13 questions this only says the true hit rate is very likely above ~75 %, not that it is 100 %. Hard cases ranked 3rd or 4th: Siemens GIV vs its twin manuals (same "60 hours" text), Siemens KIN holiday mode and door alarm.
+
+Remaining misses on the main set (both with hybrid, E4): the Liebherr HC 2090G "F1 to F5" question (the troubleshooting page is retrieved twice instead of page 11, the only page that lists the codes) and a French Bosch KGN question ("combien de temps ... attendre avant de ranger des aliments", answer on page 53, which says "plusieurs heures"; retrieval returns other French pages). Both are wording mismatches between question and manual that a re-ranker may fix (Step 3).
+
 What the numbers say
 - **Context header was the biggest single gain** (vector 50 → 83 %): content pages rarely mention brand/model, so brand-specific questions could not find them.
 - Hybrid search beat vector search at baseline (83 vs 50 %). Note: E0 hybrid already uses the new RRF fusion and tokenizer, so it is not identical to the Step 1 hybrid.
