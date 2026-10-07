@@ -49,9 +49,12 @@ def rrf_fuse(rank_lists, k, c=60):
     return sorted(score, key=lambda d: -score[d])[:k]
 
 
-def retrieve(question, k=C.TOP_K, hybrid=False, fusion="rrf", pool=20, rerank=False):
-    """rerank=True : first-stage search returns C.RERANK_POOL candidates, a cross-encoder re-scores
+def retrieve(question, k=C.TOP_K, hybrid=False, fusion="rrf", pool=20, rerank=None):
+    """rerank=None : use the default from config (C.RERANK)
+       rerank=True : first-stage search returns C.RERANK_POOL candidates, a cross-encoder re-scores
                      (question, chunk) pairs and the best k are kept."""
+    if rerank is None:
+        rerank = bool(C.RERANK)
     if rerank:
         cands = retrieve(question, k=max(C.RERANK_POOL, k), hybrid=hybrid, fusion=fusion, pool=max(pool, C.RERANK_POOL))
         scores = _reranker().predict([(question, h["text"]) for h in cands])
@@ -99,7 +102,7 @@ def _bm25_legacy():
     return BM25Okapi([d.lower().split() for d in data["documents"]]), data
 
 
-def answer(question, hybrid=True, rerank=False):
+def answer(question, hybrid=True, rerank=None):
     hits = retrieve(question, hybrid=hybrid, rerank=rerank)
     ctx = "\n\n".join(f"[{i}] ({h['source']}, p.{h['page']})\n{h['text']}" for i, h in enumerate(hits, 1))
     msg = anthropic.Anthropic().messages.create(

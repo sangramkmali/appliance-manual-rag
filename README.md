@@ -42,7 +42,22 @@ Held-out check (`eval/heldout.csv`, 13 answerable + 3 unanswerable questions wri
 
 Both modes find the right page on all 13 held-out questions; hybrid ranks it higher (MRR 0.90 vs 0.79). With 13 questions this only says the true hit rate is very likely above ~75 %, not that it is 100 %. Hard cases ranked 3rd or 4th: Siemens GIV vs its twin manuals (same "60 hours" text), Siemens KIN holiday mode and door alarm.
 
-Remaining misses on the main set (both with hybrid, E4): the Liebherr HC 2090G "F1 to F5" question (the troubleshooting page is retrieved twice instead of page 11, the only page that lists the codes) and a French Bosch KGN question ("combien de temps ... attendre avant de ranger des aliments", answer on page 53, which says "plusieurs heures"; retrieval returns other French pages). Both are wording mismatches between question and manual that a re-ranker may fix (Step 3).
+### Step 3 - re-ranking and light stemming
+
+Two further changes, each measured on the main set and on the held-out set (hybrid search, top 5):
+
+| Setup | Main set Hit@5 / MRR | Held-out Hit@5 / MRR |
+|---|---|---|
+| E4 hybrid (Step 2 result) | 89 % / 0.84 | 100 % / 0.90 |
+| + cross-encoder re-ranker (`BAAI/bge-reranker-v2-m3`, 20 candidates -> top 5) | 94 % / 0.92 | 100 % / 0.94 |
+| **+ light stemming for BM25 (first 5 letters) (default)** | **100 % / 0.93** | **100 % / 0.94** |
+
+- The re-ranker reads question and passage together. It fixed the Liebherr "F1 to F5" question and moved the Siemens GIV/KIN questions from rank 3 to rank 1. One side effect: a Dutch question slipped from rank 1 to rank 2.
+- The remaining French miss (page 53, *"ne rangez pas de produits alimentaires"*) was never in the 20 candidates: the question says *ranger* / *aliments*, the page says *rangez* / *alimentaires*, and BM25 without stemming treats them as different words. Cutting alphabetic words to their first 5 letters (language-agnostic, model numbers untouched) brought the page into the candidates (rank 4 after re-ranking). On the held-out set it changed nothing, so it did not hurt.
+- Caveat: the stemming rule was chosen after seeing that one failure; the held-out result only shows it does no harm there. The sets are still small (1 question = 5.6 points on the main set).
+- Reproduce the Step 2 numbers with `RAG_BM25_STEM=0 RAG_RERANK=0`. Cost of re-ranking: a 2.3 GB model on CPU - `evaluate.py` now prints the mean search time per question so the accuracy gain can be weighed against latency.
+
+The Step 2 notes on the two main-set misses (kept for the record; both are resolved by the changes above), E4 with hybrid: the Liebherr HC 2090G "F1 to F5" question (the troubleshooting page is retrieved twice instead of page 11, the only page that lists the codes) and a French Bosch KGN question ("combien de temps ... attendre avant de ranger des aliments", answer on page 53, which says "plusieurs heures"; retrieval returns other French pages). Both are wording mismatches between question and manual.
 
 What the numbers say
 - **Context header was the biggest single gain** (vector 50 → 83 %): content pages rarely mention brand/model, so brand-specific questions could not find them.
@@ -59,4 +74,4 @@ What the numbers say
 - Measured, not guessed: chunk size and retrieval mode chosen by hit rate.
 
 ## Next steps
-Held-out question set, re-ranking, answer-quality evaluation (LLM-as-judge), Databricks Vector Search / Azure AI Search deployment, cost and latency logging.
+Answer-quality evaluation (LLM-as-judge: faithfulness, citation correctness, refusals; prompt-injection test), Databricks Vector Search / Azure AI Search deployment, cost and latency logging.

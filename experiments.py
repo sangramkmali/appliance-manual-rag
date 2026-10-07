@@ -34,7 +34,7 @@ def main():
     rows = []
     for name in names:
         desc, over = EXPERIMENTS[name]
-        env = {**os.environ, **over, "RAG_DB_DIR": f"chroma_db_{name}"}
+        env = {**os.environ, "RAG_BM25_STEM": "0", "RAG_RERANK": "0", **over, "RAG_DB_DIR": f"chroma_db_{name}"}
         print(f"[{name}] {desc}: indexing ...", flush=True)
         run(["ingest.py"], env)
         for mode, flags in [("vector", []), ("hybrid-rrf", ["--hybrid", "--fusion", "rrf"])]:
