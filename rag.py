@@ -56,7 +56,7 @@ def retrieve(question, k=C.TOP_K, hybrid=False, fusion="rrf", pool=20, rerank=No
     if rerank is None:
         rerank = bool(C.RERANK)
     if rerank:
-        cands = retrieve(question, k=max(C.RERANK_POOL, k), hybrid=hybrid, fusion=fusion, pool=max(pool, C.RERANK_POOL))
+        cands = retrieve(question, k=max(C.RERANK_POOL, k), hybrid=hybrid, fusion=fusion, pool=max(pool, C.RERANK_POOL), rerank=False)
         scores = _reranker().predict([(question, h["text"]) for h in cands])
         order = sorted(range(len(cands)), key=lambda i: -float(scores[i]))
         return [cands[i] for i in order[:k]]
