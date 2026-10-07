@@ -18,7 +18,7 @@ CLEAN = _env("RAG_CLEAN", 1, int)                   # 1 = drop cover/TOC pages, 
 CONTEXT_HEADER = _env("RAG_CONTEXT_HEADER", 1, int) # 1 = prefix every chunk with brand/model/language
 
 # Step 3: cross-encoder re-ranking (second-stage model that reads question + chunk together)
-RERANK_MODEL = _env("RAG_RERANK_MODEL", "BAAI/bge-reranker-v2-m3")   # multilingual; alt: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
+RERANK_MODEL = _env("RAG_RERANK_MODEL", "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")   # small multilingual (~3 s/question on 2 CPU cores); better but ~10x slower: BAAI/bge-reranker-v2-m3 (needs a GPU or hosted service)
 RERANK = _env("RAG_RERANK", 1, int)                  # 1 = re-rank by default (Step 3 winner); RAG_RERANK=0 switches it off
 RERANK_POOL = _env("RAG_RERANK_POOL", 20, int)      # candidates passed to the re-ranker (then top-k are kept)
 

@@ -44,18 +44,22 @@ Both modes find the right page on all 13 held-out questions; hybrid ranks it hig
 
 ### Step 3 - re-ranking and light stemming
 
-Two further changes, each measured on the main set and on the held-out set (hybrid search, top 5):
+Two further changes, each measured on the main set and on the held-out set (hybrid search, top 5). Search time = mean per question on 2 CPU cores (GitHub Codespace).
 
-| Setup | Main set Hit@5 / MRR | Held-out Hit@5 / MRR |
-|---|---|---|
-| E4 hybrid (Step 2 result) | 89 % / 0.84 | 100 % / 0.90 |
-| + cross-encoder re-ranker (`BAAI/bge-reranker-v2-m3`, 20 candidates -> top 5) | 94 % / 0.92 | 100 % / 0.94 |
-| **+ light stemming for BM25 (first 5 letters) (default)** | **100 % / 0.93** | **100 % / 0.94** |
+| Setup | Main Hit@5 / MRR | Held-out Hit@5 / MRR | Search time |
+|---|---|---|---|
+| E4 hybrid (Step 2 result) | 89 % / 0.84 | 100 % / 0.90 | - |
+| + light stemming, no re-ranker | 89 % / 0.85 | not run | 66 ms |
+| + large re-ranker (`bge-reranker-v2-m3`), no stemming | 94 % / 0.92 | 100 % / 0.94 | not measured |
+| + stemming + large re-ranker | 100 % / 0.93 | 100 % / 0.94 | ~35 s |
+| **+ stemming + small re-ranker (`mmarco-mMiniLMv2`), 20 candidates (default)** | **100 % / 0.90** | **100 % / 0.88** | **~3.4 s** |
+| + stemming + small re-ranker, 10 candidates | 94 % / 0.89 | 100 % / 0.89 | ~1.6 s |
 
-- The re-ranker reads question and passage together. It fixed the Liebherr "F1 to F5" question and moved the Siemens GIV/KIN questions from rank 3 to rank 1. One side effect: a Dutch question slipped from rank 1 to rank 2.
-- The remaining French miss (page 53, *"ne rangez pas de produits alimentaires"*) was never in the 20 candidates: the question says *ranger* / *aliments*, the page says *rangez* / *alimentaires*, and BM25 without stemming treats them as different words. Cutting alphabetic words to their first 5 letters (language-agnostic, model numbers untouched) brought the page into the candidates (rank 4 after re-ranking). On the held-out set it changed nothing, so it did not hurt.
-- Caveat: the stemming rule was chosen after seeing that one failure; the held-out result only shows it does no harm there. The sets are still small (1 question = 5.6 points on the main set).
-- Reproduce the Step 2 numbers with `RAG_BM25_STEM=0 RAG_RERANK=0`. Cost of re-ranking: a 2.3 GB model on CPU - `evaluate.py` now prints the mean search time per question so the accuracy gain can be weighed against latency.
+- **Why re-rank:** the cross-encoder reads question and passage together. It fixed the Liebherr "F1 to F5" question and moved the Siemens GIV/KIN questions from rank 3 to rank 1. Side effect: a Dutch question slipped from rank 1 to rank 2.
+- **Why stemming:** the French miss (page 53, *"ne rangez pas de produits alimentaires"*) was never among the 20 candidates: the question says *ranger* / *aliments*, the page says *rangez* / *alimentaires*, and BM25 without stemming treats them as different words. Cutting alphabetic words to their first 5 letters (language-agnostic, model numbers untouched) brings the page into the candidates. On its own it does not fix the question; it needs the re-ranker to lift the page into the top 5. It did not change the held-out result, so it did no harm there.
+- **Latency trade-off:** the large re-ranker is the most accurate but ~35 s per question on CPU, which is unusable for a demo (about 500x slower than no re-ranker). The small model keeps 100 % Hit@5 on both sets at ~3.4 s and costs 0.03-0.06 MRR. Using only 10 candidates halves the time but loses the French question again, so the pool stays at 20. With a GPU or a hosted re-ranking service the large model would be the better choice (`RAG_RERANK_MODEL=BAAI/bge-reranker-v2-m3`).
+- **Caveats:** the stemming rule was chosen after seeing that one failure; the sets are small (1 question = 5.6 points on the main set); the AEG "längere Zeit nicht benutzen" question drops to rank 4-5 with the small model, so it is near the edge of the top 5.
+- Reproduce the Step 2 numbers with `RAG_BM25_STEM=0 RAG_RERANK=0`.
 
 The Step 2 notes on the two main-set misses (kept for the record; both are resolved by the changes above), E4 with hybrid: the Liebherr HC 2090G "F1 to F5" question (the troubleshooting page is retrieved twice instead of page 11, the only page that lists the codes) and a French Bosch KGN question ("combien de temps ... attendre avant de ranger des aliments", answer on page 53, which says "plusieurs heures"; retrieval returns other French pages). Both are wording mismatches between question and manual.
 
